@@ -135,6 +135,40 @@ class Exposure
         return (int)($row['total'] ?? 0);
     }
 
+    public function monthlyNotionalByRole(array $user, int $months = 6): array
+    {
+        $months = max(1, $months);
+        $start = (new \DateTimeImmutable('first day of this month'))
+            ->modify(sprintf('-%d months', $months - 1))
+            ->setTime(0, 0, 0);
+
+        if (in_array($user['role'], ['admin', 'auditor'], true)) {
+            $stmt = $this->db->prepare(
+                'SELECT DATE_FORMAT(created_at, "%Y-%m") AS period, COALESCE(SUM(notional), 0) AS total
+                 FROM exposures
+                 WHERE created_at >= :start
+                 GROUP BY period
+                 ORDER BY period'
+            );
+            $stmt->execute(['start' => $start->format('Y-m-d H:i:s')]);
+        } else {
+            $stmt = $this->db->prepare(
+                'SELECT DATE_FORMAT(created_at, "%Y-%m") AS period, COALESCE(SUM(notional), 0) AS total
+                 FROM exposures
+                 WHERE created_at >= :start AND user_id = :user_id
+                 GROUP BY period
+                 ORDER BY period'
+            );
+            $stmt->execute([
+                'start' => $start->format('Y-m-d H:i:s'),
+                'user_id' => $user['id'],
+            ]);
+        }
+
+        $rows = $stmt->fetchAll();
+        return array_column($rows, 'total', 'period');
+    }
+
     public function setShariaStatus(int $id, string $status, ?string $notes): void
     {
         $stmt = $this->db->prepare('UPDATE exposures SET shariah_status = :status, shariah_notes = :notes, updated_at = NOW() WHERE id = :id');

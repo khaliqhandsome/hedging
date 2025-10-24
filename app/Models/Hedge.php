@@ -179,4 +179,39 @@ class Hedge
         $stmt = $this->db->query('SELECT * FROM hedges ORDER BY created_at DESC');
         return $stmt->fetchAll();
     }
+
+    public function monthlyNotionalByRole(array $user, int $months = 6): array
+    {
+        $months = max(1, $months);
+        $start = (new \DateTimeImmutable('first day of this month'))
+            ->modify(sprintf('-%d months', $months - 1))
+            ->setTime(0, 0, 0);
+
+        if (in_array($user['role'], ['admin', 'auditor'], true)) {
+            $stmt = $this->db->prepare(
+                'SELECT DATE_FORMAT(created_at, "%Y-%m") AS period, COALESCE(SUM(notional), 0) AS total
+                 FROM hedges
+                 WHERE created_at >= :start
+                 GROUP BY period
+                 ORDER BY period'
+            );
+            $stmt->execute(['start' => $start->format('Y-m-d H:i:s')]);
+        } else {
+            $stmt = $this->db->prepare(
+                'SELECT DATE_FORMAT(h.created_at, "%Y-%m") AS period, COALESCE(SUM(h.notional), 0) AS total
+                 FROM hedges h
+                 JOIN exposures e ON e.id = h.exposure_id
+                 WHERE h.created_at >= :start AND e.user_id = :user_id
+                 GROUP BY period
+                 ORDER BY period'
+            );
+            $stmt->execute([
+                'start' => $start->format('Y-m-d H:i:s'),
+                'user_id' => $user['id'],
+            ]);
+        }
+
+        $rows = $stmt->fetchAll();
+        return array_column($rows, 'total', 'period');
+    }
 }

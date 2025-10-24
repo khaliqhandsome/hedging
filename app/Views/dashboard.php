@@ -36,83 +36,106 @@ foreach ($hedgeStats as $stat) {
     ];
 }
 $totalHedgeNotional = array_sum(array_column($hedgeDistribution, 'notional')) ?: 0.0;
+
+$trendLabels = $trendLabels ?? [];
+$trendExposureSeries = $trendExposureSeries ?? [];
+$trendHedgeSeries = $trendHedgeSeries ?? [];
+$trendHasData = array_sum($trendExposureSeries) > 0 || array_sum($trendHedgeSeries) > 0;
+
+$palette = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+$hedgeChartLabels = [];
+$hedgeChartValues = [];
+foreach ($akadTypes as $key => $label) {
+    $data = $hedgeDistribution[$key] ?? ['total' => 0, 'notional' => 0.0];
+    $hedgeChartLabels[] = $label;
+    $hedgeChartValues[] = round((float)$data['notional'], 2);
+}
+$colorMap = [];
+foreach ($hedgeChartLabels as $idx => $label) {
+    $colorMap[$label] = $palette[$idx % count($palette)];
+}
 ?>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <div>
         <h1 class="h3 mb-1 text-gray-800">Dashboard</h1>
-        <p class="text-muted mb-0">Pantau eksposur, kepatuhan syariah, dan aktivitas hedging dalam satu tempat.</p>
+        <p class="text-muted mb-0">Pantau eksposur, kepatuhan syariah, dan performa hedging secara real-time.</p>
     </div>
-    <?php if (in_array($user['role'], ['admin', 'auditor'], true)): ?>
-        <a href="/reports" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-            <i class="fas fa-download fa-sm text-white-50"></i> Lihat Laporan
+    <div class="d-flex flex-wrap gap-2">
+        <a href="/hedges/create" class="btn btn-sm btn-outline-primary shadow-sm">
+            <i class="fas fa-plus me-1"></i> Tambah Hedging
         </a>
-    <?php endif; ?>
+        <?php if (in_array($user['role'], ['admin', 'auditor'], true)): ?>
+            <a href="/reports" class="btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-download fa-sm text-white-50"></i> Laporan Lengkap
+            </a>
+        <?php endif; ?>
+    </div>
 </div>
 
-<div class="row">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="row g-0 align-items-center">
-                    <div class="col pe-2">
-                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Eksposur</div>
-                        <div class="h4 mb-0 fw-bold text-gray-800"><?= $totalExposures; ?></div>
-                        <div class="text-muted small">Notional: <?= number_format($exposureNotional, 2); ?></div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-xs text-uppercase fw-bold text-muted mb-1">Eksposur Aktif</p>
+                        <h4 class="fw-bold text-primary mb-0"><?= $totalExposures; ?></h4>
+                        <span class="text-muted small">Total notional <?= number_format($exposureNotional, 2); ?></span>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-warehouse fa-2x text-gray-300"></i>
+                    <div class="icon-circle bg-gradient-primary text-white">
+                        <i class="fas fa-warehouse"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="row g-0 align-items-center">
-                    <div class="col pe-2">
-                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Review Syariah</div>
-                        <div class="h4 mb-0 fw-bold text-gray-800"><?= $pendingReviews; ?> Pending</div>
-                        <div class="text-muted small">Perlu segera divalidasi</div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-xs text-uppercase fw-bold text-muted mb-1">Review Syariah Pending</p>
+                        <h4 class="fw-bold text-warning mb-0"><?= $pendingReviews; ?></h4>
+                        <span class="text-muted small">Perlu segera divalidasi</span>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    <div class="icon-circle bg-gradient-warning text-white">
+                        <i class="fas fa-clipboard-list"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="row g-0 align-items-center">
-                    <div class="col pe-2">
-                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Portofolio Hedging</div>
-                        <div class="h4 mb-0 fw-bold text-gray-800"><?= $hedgeCount; ?> Transaksi</div>
-                        <div class="text-muted small">Notional: <?= number_format($hedgeNotional, 2); ?></div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-xs text-uppercase fw-bold text-muted mb-1">Portofolio Hedging</p>
+                        <h4 class="fw-bold text-success mb-0"><?= $hedgeCount; ?></h4>
+                        <span class="text-muted small">Notional <?= number_format($hedgeNotional, 2); ?></span>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-shield-halved fa-2x text-gray-300"></i>
+                    <div class="icon-circle bg-gradient-success text-white">
+                        <i class="fas fa-shield-halved"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="row g-0 align-items-center">
-                    <div class="col pe-2">
-                        <div class="text-xs fw-bold text-info text-uppercase mb-1">Coverage Hedging</div>
-                        <div class="h4 mb-0 fw-bold text-gray-800"><?= $coverageDisplay; ?>%</div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-xs text-uppercase fw-bold text-muted mb-1">Coverage Hedging</p>
+                        <h4 class="fw-bold text-info mb-0"><?= $coverageDisplay; ?>%</h4>
                         <div class="progress mt-2" style="height: 6px;">
                             <div class="progress-bar bg-info" role="progressbar" style="width: <?= $coverageDisplay; ?>%;" aria-valuenow="<?= $coverage; ?>" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
-                        <div class="text-muted small mt-2">Perbandingan notional hedging terhadap eksposur</div>
+                        <span class="text-muted small">Perbandingan notional hedging terhadap eksposur</span>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    <div class="icon-circle bg-gradient-info text-white">
+                        <i class="fas fa-chart-line"></i>
                     </div>
                 </div>
             </div>
@@ -120,12 +143,66 @@ $totalHedgeNotional = array_sum(array_column($hedgeDistribution, 'notional')) ?:
     </div>
 </div>
 
-<div class="row">
-    <div class="col-lg-7 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+<div class="row g-4 mb-4">
+    <div class="col-xl-8">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold text-primary">Performa Notional Bulanan</h6>
+                <span class="badge bg-primary-subtle text-primary fw-semibold">6 bulan terakhir</span>
+            </div>
+            <div class="card-body">
+                <?php if ($trendHasData): ?>
+                    <canvas id="exposureTrendChart" height="160"></canvas>
+                <?php else: ?>
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-chart-area fa-2x mb-3 text-gray-300"></i>
+                        <p class="mb-0">Belum ada data historis untuk ditampilkan.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold text-primary">Distribusi Akad</h6>
+                <span class="badge bg-light text-secondary"><?= $hedgeCount; ?> transaksi</span>
+            </div>
+            <div class="card-body">
+                <?php if ($hedgeCount > 0 && array_sum($hedgeChartValues) > 0): ?>
+                    <canvas id="hedgeDistributionChart" height="200"></canvas>
+                    <div class="mt-4">
+                        <?php foreach ($akadTypes as $key => $label): ?>
+                            <?php $data = $hedgeDistribution[$key] ?? ['total' => 0, 'notional' => 0.0]; ?>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge rounded-circle" style="background-color: <?= $colorMap[$label] ?? '#4e73df'; ?>; width: 10px; height: 10px;"></span>
+                                    <span class="text-muted small"><?= htmlspecialchars($label); ?></span>
+                                </div>
+                                <div class="text-end">
+                                    <span class="fw-semibold text-gray-700 small"><?= $data['total']; ?> trx</span>
+                                    <div class="text-muted small">Notional <?= number_format($data['notional'], 2); ?></div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-chart-pie fa-2x mb-3 text-gray-300"></i>
+                        <p class="mb-0">Belum ada transaksi hedging yang terekam.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 fw-bold text-primary">Status Kepatuhan Syariah</h6>
-                <span class="badge bg-light text-secondary">Total <?= $statusTotal; ?> Eksposur</span>
+                <span class="badge bg-light text-secondary">Total <?= $statusTotal; ?> eksposur</span>
             </div>
             <div class="card-body">
                 <?php if ($statusTotal > 0): ?>
@@ -150,42 +227,30 @@ $totalHedgeNotional = array_sum(array_column($hedgeDistribution, 'notional')) ?:
             </div>
         </div>
     </div>
-    <div class="col-lg-5 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 fw-bold text-primary">Distribusi Akad Hedging</h6>
-                <span class="badge bg-light text-secondary"><?= $hedgeCount; ?> Transaksi</span>
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold text-primary">Insight Kepatuhan</h6>
+                <span class="badge bg-primary-subtle text-primary fw-semibold">Rekomendasi</span>
             </div>
-            <div class="card-body">
-                <?php if ($hedgeCount > 0): ?>
-                    <ul class="list-group list-group-flush">
-                        <?php foreach ($akadTypes as $key => $label): ?>
-                            <?php $data = $hedgeDistribution[$key] ?? ['total' => 0, 'notional' => 0.0]; ?>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="fw-semibold text-gray-800"><?= htmlspecialchars($label); ?></span>
-                                    <div class="text-muted small">Notional <?= number_format($data['notional'], 2); ?></div>
-                                </div>
-                                <span class="badge bg-primary-subtle text-primary fw-semibold"><?= $data['total']; ?> trx</span>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                    <div class="mt-3 small text-muted">Total notional hedging: <?= number_format($totalHedgeNotional, 2); ?></div>
-                <?php else: ?>
-                    <div class="text-center text-muted py-5">
-                        <i class="fas fa-chart-pie fa-2x mb-3 text-gray-300"></i>
-                        <p class="mb-0">Belum ada transaksi hedging yang terekam.</p>
-                    </div>
-                <?php endif; ?>
+            <div class="card-body d-flex align-items-center">
+                <div class="me-4">
+                    <img src="https://cdn.jsdelivr.net/gh/creativetimofficial/public-assets/illustrations/rocket-launch.svg" alt="Illustration" width="120" class="d-none d-md-block">
+                </div>
+                <div>
+                    <p class="text-muted small mb-2">Pastikan setiap eksposur dilengkapi bukti underlying dan tujuan tahawwut untuk menjaga integritas portofolio.</p>
+                    <p class="text-muted small mb-3">Gunakan laporan HTML atau CSV untuk audit trail dan tinjauan regulator yang lebih cepat.</p>
+                    <a href="/reports" class="btn btn-sm btn-outline-primary">Kelola Laporan</a>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 fw-bold text-primary">Eksposur Terbaru</h6>
                 <span class="badge bg-primary-subtle text-primary fw-semibold"><?= $totalExposures; ?> total</span>
             </div>
@@ -233,10 +298,10 @@ $totalHedgeNotional = array_sum(array_column($hedgeDistribution, 'notional')) ?:
             </div>
         </div>
     </div>
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 fw-bold text-primary">Hedging Terbaru</h6>
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold text-primary">Aktivitas Hedging Terbaru</h6>
                 <span class="badge bg-success-subtle text-success fw-semibold"><?= $hedgeCount; ?> total</span>
             </div>
             <div class="card-body">
@@ -266,3 +331,102 @@ $totalHedgeNotional = array_sum(array_column($hedgeDistribution, 'notional')) ?:
         </div>
     </div>
 </div>
+
+<?php if ($trendHasData || ($hedgeCount > 0 && array_sum($hedgeChartValues) > 0)): ?>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const trendLabels = <?= json_encode($trendLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        const exposureSeries = <?= json_encode($trendExposureSeries, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        const hedgeSeries = <?= json_encode($trendHedgeSeries, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        const hedgeLabels = <?= json_encode($hedgeChartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        const hedgeValues = <?= json_encode($hedgeChartValues, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        const palette = <?= json_encode($palette, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+
+        if (trendLabels.length && (exposureSeries.some(v => v > 0) || hedgeSeries.some(v => v > 0))) {
+            const ctx = document.getElementById('exposureTrendChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: trendLabels,
+                        datasets: [
+                            {
+                                label: 'Eksposur',
+                                data: exposureSeries,
+                                borderColor: '#4e73df',
+                                backgroundColor: 'rgba(78, 115, 223, 0.15)',
+                                tension: 0.4,
+                                fill: true,
+                                borderWidth: 3,
+                            },
+                            {
+                                label: 'Hedging',
+                                data: hedgeSeries,
+                                borderColor: '#1cc88a',
+                                backgroundColor: 'rgba(28, 200, 138, 0.15)',
+                                tension: 0.4,
+                                fill: true,
+                                borderWidth: 3,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        const value = context.parsed.y || 0;
+                                        return `${context.dataset.label}: ${value.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: (value) => value.toLocaleString('id-ID')
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        if (hedgeLabels.some((_, idx) => hedgeValues[idx] > 0)) {
+            const ctx = document.getElementById('hedgeDistributionChart');
+            if (ctx) {
+                const colors = hedgeLabels.map((_, index) => palette[index % palette.length]);
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: hedgeLabels,
+                        datasets: [{
+                            data: hedgeValues,
+                            backgroundColor: colors,
+                            hoverBackgroundColor: colors,
+                            borderWidth: 0,
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false,
+                            }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            }
+        }
+    });
+</script>
+<?php endif; ?>

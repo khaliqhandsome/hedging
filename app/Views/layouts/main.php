@@ -31,8 +31,35 @@ $activeClass = static function (array $paths) use ($currentPath): string {
             font-family: 'Nunito', sans-serif;
             background-color: #f8f9fc;
         }
-        .sidebar .nav-link.active {
-            font-weight: 700;
+        .topbar-accent {
+            height: 4px;
+            background: linear-gradient(90deg, #f5365c, #fb6340);
+        }
+        .sidebar {
+            background: linear-gradient(180deg, #4e73df 10%, #224abe 100%) !important;
+        }
+        .sidebar .sidebar-brand {
+            height: 5rem;
+        }
+        .sidebar .sidebar-brand-icon {
+            font-size: 1.5rem;
+        }
+        .sidebar .nav-item .nav-link {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding-top: .85rem;
+            padding-bottom: .85rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .sidebar .nav-item .nav-link span {
+            font-size: 0.9rem;
+        }
+        .sidebar .nav-item.active > .nav-link,
+        .sidebar .nav-item .nav-link.active,
+        .sidebar .nav-item .nav-link:hover {
+            color: #fff;
         }
         .sidebar.toggled {
             width: 6.5rem !important;
@@ -40,6 +67,42 @@ $activeClass = static function (array $paths) use ($currentPath): string {
         }
         body.sidebar-toggled #accordionSidebar {
             width: 6.5rem !important;
+        }
+        .topbar {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid rgba(78, 115, 223, 0.15);
+        }
+        .icon-circle {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0.15rem 0.75rem rgba(58, 59, 69, 0.15);
+            font-size: 1.15rem;
+        }
+        .topbar .input-group > .form-control {
+            border: none;
+            background-color: #f1f5ff;
+        }
+        .topbar .input-group-text {
+            border: none;
+            background-color: #f1f5ff;
+            color: #4e73df;
+        }
+        .topbar .nav-link {
+            color: #5a5c69;
+        }
+        .badge-counter {
+            position: absolute;
+            transform: scale(.7);
+            transform-origin: top right;
+            top: .35rem;
+            right: .35rem;
+        }
+        .scroll-to-top {
+            background-color: #4e73df;
         }
         @media (max-width: 991.98px) {
             #accordionSidebar {
@@ -53,8 +116,9 @@ $activeClass = static function (array $paths) use ($currentPath): string {
     </style>
 </head>
 <body id="page-top">
+<div class="topbar-accent"></div>
 <div id="wrapper">
-    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+    <ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar">
         <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/">
             <div class="sidebar-brand-icon rotate-n-15">
                 <i class="fas fa-chart-line"></i>
@@ -64,7 +128,7 @@ $activeClass = static function (array $paths) use ($currentPath): string {
         <hr class="sidebar-divider my-0">
         <li class="nav-item<?= $activeClass(['/']); ?>">
             <a class="nav-link<?= $activeClass(['/']); ?>" href="/">
-                <i class="fas fa-tachometer-alt"></i>
+                <i class="fas fa-gauge-high"></i>
                 <span>Dashboard</span>
             </a>
         </li>
@@ -109,16 +173,53 @@ $activeClass = static function (array $paths) use ($currentPath): string {
     </ul>
     <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
-            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-                <button class="btn btn-link d-md-none rounded-circle mr-3" id="sidebarToggleTop" type="button" aria-label="Toggle sidebar">
+            <nav class="navbar navbar-expand navbar-light topbar shadow-sm">
+                <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button" aria-label="Toggle sidebar">
                     <i class="fa fa-bars"></i>
                 </button>
-                <ul class="navbar-nav ms-auto">
+                <form class="d-none d-sm-inline-block form-inline me-auto ms-3 my-2 my-md-0 w-50">
+                    <div class="input-group shadow-sm rounded-pill overflow-hidden">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Cari laporan, eksposur, atau hedge..." aria-label="Pencarian">
+                    </div>
+                </form>
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item d-none d-lg-inline text-muted small me-3">
+                        Assalamu'alaikum, selamat bekerja!
+                    </li>
+                    <li class="nav-item dropdown no-arrow mx-1">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell fa-lg"></i>
+                            <span class="badge badge-danger badge-counter bg-danger text-white">3+</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow">
+                            <h6 class="dropdown-header">Notifikasi</h6>
+                            <a class="dropdown-item small" href="#">Review syariah membutuhkan perhatian.</a>
+                            <a class="dropdown-item small" href="#">Eksposur baru berhasil ditambahkan.</a>
+                            <a class="dropdown-item small text-primary" href="/reports">Lihat semua laporan</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown no-arrow mx-1">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-envelope fa-lg"></i>
+                            <span class="badge badge-success badge-counter bg-success text-white">2</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow">
+                            <h6 class="dropdown-header">Pesan Internal</h6>
+                            <a class="dropdown-item small" href="#">Audit internal dijadwalkan pekan ini.</a>
+                            <a class="dropdown-item small" href="#">Pembaruan kebijakan kepatuhan tersedia.</a>
+                        </div>
+                    </li>
                     <?php if ($user): ?>
                         <li class="nav-item dropdown no-arrow">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="me-2 d-none d-lg-inline text-gray-600 small"><?= htmlspecialchars($user['username']); ?> · <?= htmlspecialchars(strtoupper($user['role'])); ?></span>
-                                <i class="fas fa-user-circle fa-lg text-gray-400"></i>
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <div class="me-2 text-end">
+                                    <span class="d-none d-lg-block text-gray-600 small fw-semibold"><?= htmlspecialchars($user['username']); ?></span>
+                                    <span class="d-none d-lg-block text-muted text-uppercase small"><?= htmlspecialchars($user['role']); ?></span>
+                                </div>
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
                                 <span class="dropdown-item-text text-muted small">Masuk sebagai <strong><?= htmlspecialchars($user['role']); ?></strong></span>
@@ -134,7 +235,7 @@ $activeClass = static function (array $paths) use ($currentPath): string {
                     <?php endif; ?>
                 </ul>
             </nav>
-            <div class="container-fluid">
+            <div class="container-fluid py-4">
                 <?= $content ?? '' ?>
             </div>
         </div>
@@ -151,6 +252,7 @@ $activeClass = static function (array $paths) use ($currentPath): string {
     <i class="fas fa-angle-up"></i>
 </a>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" integrity="sha256-SJk3F6/Dr7guPmyAnbcW2CYwiVdc+GqOR/mdrIW6DC8=" crossorigin="anonymous"></script>
 <script>
     const sidebar = document.getElementById('accordionSidebar');
     const toggleButtons = [
@@ -164,5 +266,6 @@ $activeClass = static function (array $paths) use ($currentPath): string {
         });
     });
 </script>
+<?= $scripts ?? '' ?>
 </body>
 </html>
